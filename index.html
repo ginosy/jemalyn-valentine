@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine?</title>
+
+  <style>
+    :root {
+      --bg1:#ffeff6;
+      --bg2:#ffe3ef;
+      --ink:#241322;
+      --pink:#ff4d9a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 600px at 20% 10%, var(--bg1), transparent),
+        radial-gradient(900px 600px at 80% 90%, var(--bg2), transparent),
+        #fff;
+    }
+
+    .card{
+      width:min(720px, 92vw);
+      padding:42px 28px;
+      background:rgba(255,255,255,.75);
+      border:1px solid rgba(255,158,200,.35);
+      border-radius:24px;
+      box-shadow:0 20px 50px rgba(50,0,25,.12);
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+
+    h1{
+      font-size:clamp(28px,4vw,44px);
+      margin:0 0 10px;
+    }
+
+    .sub{
+      margin:0 0 28px;
+      opacity:.8;
+      font-size:16px;
+    }
+
+    .name{
+      display:inline-block;
+      padding:0 .18em;
+      border-radius:10px;
+      background:rgba(255,110,170,.15);
+    }
+
+    .btns{
+      position:relative;
+      height:140px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+    }
+
+    button{
+      border:none;
+      padding:14px 20px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:16px;
+      cursor:pointer;
+      user-select:none;
+      box-shadow:0 10px 20px rgba(0,0,0,.12);
+      transition: transform .12s ease, opacity .12s ease;
+    }
+
+    #yes{
+      background:var(--pink);
+      color:#fff;
+    }
+
+    #yes:active{
+      transform: scale(.98);
+    }
+
+    #no{
+      background:#f1f1f5;
+      color:#333;
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(140px,-50%);
+    }
+
+    .result{
+      margin-top:18px;
+      font-size:18px;
+      font-weight:650;
+      min-height:34px;
+      line-height:1.3;
+    }
+
+    .result small{
+      display:block;
+      margin-top:6px;
+      font-size:15px;
+      font-weight:600;
+      opacity:.85;
+    }
+
+    .heartsBg{
+      position:absolute;
+      inset:-40px;
+      pointer-events:none;
+      opacity:.18;
+      background-image:
+        radial-gradient(circle at 20px 20px, var(--pink) 2px, transparent 3px),
+        radial-gradient(circle at 80px 70px, #ff7ab6 2px, transparent 3px),
+        radial-gradient(circle at 140px 30px, var(--pink) 2px, transparent 3px);
+      background-size:180px 120px;
+      transform:rotate(-8deg);
+    }
+
+    /* Photo fade-in */
+    #yesPhoto{
+      display:none;
+      width:min(520px,90%);
+      margin:18px auto 0;
+      border-radius:18px;
+      box-shadow:0 16px 40px rgba(0,0,0,.18);
+      opacity:0;
+      transform: translateY(8px);
+    }
+
+    #yesPhoto.show{
+      display:block;
+      animation: fadeInUp .55s ease forwards;
+    }
+
+    @keyframes fadeInUp{
+      to { opacity:1; transform: translateY(0); }
+    }
+
+    /* Heart burst particles */
+    .particle{
+      position:absolute;
+      left:0;
+      top:0;
+      pointer-events:none;
+      will-change: transform, opacity;
+      font-size: 18px;
+      opacity: 0;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.15));
+      animation: pop 900ms ease-out forwards;
+    }
+
+    @keyframes pop{
+      0%   { transform: translate(var(--x0), var(--y0)) scale(.7); opacity:0; }
+      12%  { opacity:1; }
+      100% { transform: translate(var(--x1), var(--y1)) scale(1.15); opacity:0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card" id="card">
+    <div class="heartsBg"></div>
+
+    <h1>
+      <span class="name">Jemalyn</span>,<br>
+      Will you be my Valentine?
+    </h1>
+
+    <p class="sub">Choose wisely 😇</p>
+
+    <div class="btns" id="arena">
+      <button id="yes">YES 💘</button>
+      <button id="no">NO 🙃</button>
+    </div>
+
+    <div class="result" id="result"></div>
+
+    <img
+      id="yesPhoto"
+      src="jemalyn-valentine.png"
+      alt="Us 💖"
+    />
+  </div>
+
+  <script>
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const arena = document.getElementById("arena");
+    const result = document.getElementById("result");
+    const photo = document.getElementById("yesPhoto");
+    const card = document.getElementById("card");
+
+    let noScale = 1.0;
+    const minNoScale = 0.45;
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function moveNo() {
+      const a = arena.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+      const pad = 8;
+
+      // Shrink a bit each time it tries to run away
+      noScale = clamp(noScale * 0.92, minNoScale, 1.0);
+      noBtn.style.transform = `scale(${noScale})`;
+      noBtn.style.opacity = String(clamp(noScale + 0.15, 0.55, 1));
+
+      // Re-measure after scaling
+      const bb = noBtn.getBoundingClientRect();
+      const maxX = a.width - bb.width - pad;
+      const maxY = a.height - bb.height - pad;
+
+      const x = Math.max(pad, Math.random() * maxX);
+      const y = Math.max(pad, Math.random() * maxY);
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top = y + "px";
+
+      // Tiny wiggle
+      noBtn.animate(
+        [{ transform: `scale(${noScale}) translateX(0px)` },
+         { transform: `scale(${noScale}) translateX(2px)` },
+         { transform: `scale(${noScale}) translateX(0px)` }],
+        { duration: 130, iterations: 1 }
+      );
+    }
+
+    // Heart burst near the YES button
+    function heartBurst() {
+      const yesRect = yesBtn.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+
+      const originX = yesRect.left + yesRect.width / 2 - cardRect.left;
+      const originY = yesRect.top + yesRect.height / 2 - cardRect.top;
+
+      const hearts = ["💖","💘","💗","💕","💞","💓"];
+
+      for (let i = 0; i < 22; i++) {
+        const p = document.createElement("div");
+        p.className = "particle";
+        p.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 80 + Math.random() * 110;
+        const x1 = Math.cos(angle) * dist;
+        const y1 = Math.sin(angle) * dist - (30 + Math.random() * 40);
+
+        p.style.setProperty("--x0", `${originX}px`);
+        p.style.setProperty("--y0", `${originY}px`);
+        p.style.setProperty("--x1", `${originX + x1}px`);
+        p.style.setProperty("--y1", `${originY + y1}px`);
+
+        p.style.fontSize = (14 + Math.random() * 16) + "px";
+        p.style.animationDuration = (750 + Math.random() * 450) + "ms";
+
+        card.appendChild(p);
+        p.addEventListener("animationend", () => p.remove());
+      }
+    }
+
+    // Make NO flee on desktop
+    noBtn.addEventListener("mouseenter", moveNo);
+    noBtn.addEventListener("mousemove", moveNo);
+    noBtn.addEventListener("pointerenter", moveNo);
+
+    // Make NO flee on mobile tap
+    noBtn.addEventListener("touchstart", e => {
+      e.preventDefault();
+      moveNo();
+    }, { passive:false });
+
+    yesBtn.addEventListener("click", () => {
+      result.innerHTML = `I had a feeling you were going to say yes… MWAH 💖
+        <small>Dinner’s on me 😌</small>`;
+
+      heartBurst();
+
+      photo.classList.add("show");
+      photo.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      noBtn.style.display = "none";
+      yesBtn.textContent = "✅ YES (locked in)";
+      yesBtn.disabled = true;
+      yesBtn.style.opacity = 0.92;
+      yesBtn.style.cursor = "default";
+    });
+
+    window.addEventListener("load", () => {
+      // Start NO at a random spot immediately
+      moveNo();
+    });
+
+    window.addEventListener("resize", () => {
+      // Re-place NO on resize (if it's still around)
+      if (noBtn.style.display !== "none") moveNo();
+    });
+  </script>
+</body>
+</html>
